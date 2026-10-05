@@ -28,3 +28,11 @@ Notes, tasks, scene, timer and settings stay in localStorage on this browser and
 ## Shortcuts
 
 Outside form controls: Space timer, F zen, 1/2/3 scene, R rain, M mute, N notes. Escape exits zen or closes the command dialog. Shortcuts do not intercept typing in notes or tasks.
+
+## Immersive atmospheres
+
+The scene selector changes the full-page landscape, cards, controls, dialog and browser theme color. Forest includes layered tree silhouettes and gentle mist; motion preferences disable the mist. Rain visuals cover the viewport and remain independent from sound.
+
+The prominent rain button and S shortcut toggle stereo synthesized rain. Drizzle, window rain and downpour profiles change its tone, loudness and visual density. These are procedural sounds, not field recordings. The optional 15/30/60-minute sleep timer stops all audio; it resets on reload.
+
+Run state tests with `node --test tests/*.test.cjs`. Audio tests use a mock Web Audio context to verify controls and cleanup; they do not validate perceived sound quality. Browser visual and listening checks remain necessary.
