@@ -6,7 +6,7 @@ import re
 root = Path(__file__).resolve().parents[1]
 page = root / 'index.html'
 html = page.read_text()
-for name in ('style.css', 'app.js'):
+for name in ('style.css', 'mobile.css', 'app.js'):
     version = sha256((root / name).read_bytes()).hexdigest()[:12]
     pattern = r'(href|src)="' + re.escape(name) + r'(?:\?[^\"]*)?"'
     html, count = re.subn(pattern, lambda m: f'{m[1]}="{name}?v={version}"', html)

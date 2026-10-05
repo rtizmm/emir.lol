@@ -79,3 +79,5 @@ textarea{max-width:100%}
  .card{padding:16px}
  footer{flex-wrap:wrap;gap:10px}
 }
+
+.mobile-nav{display:none}

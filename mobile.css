@@ -1,0 +1,57 @@
+/* Touch controls also apply to tablets, without changing their column layout. */
+@media (pointer:coarse){
+ button,a,input,select,textarea{touch-action:manipulation}
+ button,.icon,.quiet,.scene-button,.segments button,.scene-tabs button,.text-btn,.mute{min-height:44px}
+ .icon,.reset{min-width:44px}
+ input:not([type=range]):not([type=checkbox]),textarea,select,.dialog-head input,#taskInput{font-size:16px}
+ .sound-row input[type=range]{height:32px;margin-top:5px}
+ #taskList input[type=checkbox]{width:22px;height:22px;flex-shrink:0}
+ #taskList button{min-width:44px}
+ .sound-row>button{min-height:48px}
+}
+@media (max-width:760px){
+ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:85px}
+ body{font-size:15px}
+ .topbar{padding:12px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));padding-top:max(12px,env(safe-area-inset-top));gap:12px}
+ main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));padding-bottom:env(safe-area-inset-bottom)}
+ .brand{font-size:25px}.quiet{font-size:20px;min-width:44px;justify-content:center}.icon{min-width:44px}
+ .panorama{min-height:440px;padding:18px 16px;gap:22px;border-radius:18px}
+ .scene-top{flex-direction:column;gap:12px;align-items:stretch}
+ .scene-top .live-dot{font-size:10px;letter-spacing:1.4px}
+ .weather-actions{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;align-self:stretch}
+ .scene-button{width:100%;min-height:44px;font-size:11px;line-height:1.4;border-radius:10px;padding:9px 8px}
+ .clock-wrap{padding:8px 0}.clock-wrap>p:first-child{font-size:12px;letter-spacing:1px}
+ #clock{font-size:clamp(68px,19vw,112px)}#date{font-size:12px;letter-spacing:.6px}.tagline{font-size:15px}
+ .scene-bottom{gap:13px;align-items:stretch}.scene-bottom>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px}.tiny{font-size:9px;letter-spacing:1px}.scene-bottom p{font-size:11px;margin:0}
+ .scene-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px}
+ .scene-tabs button{min-height:44px;white-space:normal;padding:8px 4px;font-size:11px}.scene-tabs i{margin-right:5px}
+ .under-scene{padding:20px 0 16px;gap:10px;font-size:12px;line-height:1.6}.quicklinks{gap:6px;width:100%}.quicklinks a{display:flex;align-items:center;justify-content:center;min-height:44px;flex:1;font-size:12px}
+ .mobile-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--control);border:1px solid var(--border);border-radius:12px;padding:4px;margin:0 0 16px;box-shadow:0 6px 22px #0003}
+ .mobile-nav a{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:8px;color:var(--text)}.mobile-nav a:active{background:var(--control-active)}
+ .dashboard{gap:16px;grid-template-columns:minmax(0,1fr)}.card{padding:20px 18px;scroll-margin-top:85px;border-radius:16px}
+ .card-heading{margin-bottom:18px;gap:10px}.card-heading h1,.card-heading h2{font-size:16px}.card-heading h1>span,.card-heading h2>span{font-size:11px}.badge,.save-state{font-size:11px}
+ .segments{gap:3px}.segments button{min-height:44px;font-size:12px;line-height:1.4;padding:8px 4px}
+ .timer-ring{margin:22px auto;width:180px;height:180px}#timerHint{font-size:11px}
+ .timer-actions{width:100%}.primary{min-height:48px;font-size:14px;flex:1;max-width:260px}.reset{min-width:48px;min-height:48px}
+ .footnote{font-size:11px;line-height:1.6}.privacy{font-size:11px}.note-bottom{font-size:11px;gap:12px}.text-btn{font-size:12px;min-height:44px;padding:8px}
+ #notes{font-size:16px;line-height:32px;min-height:224px;resize:vertical}#taskInput{font-size:16px;min-height:44px}.note-tabs span{font-size:11px}
+ #taskList{max-height:none}#taskList label{font-size:14px;line-height:1.5}#taskList input{width:22px;height:22px;flex-shrink:0}#taskList button{min-width:44px;min-height:44px;font-size:22px}.empty{font-size:13px}
+ .sound-card{display:block}.sound-intro{font-size:17px;line-height:1.5}.sound-indicator{font-size:10px}.sound-row{margin-bottom:20px}.sound-row>button{font-size:14px;min-height:48px}.sound-row small{font-size:11px;line-height:1.4}.sound-icon{width:42px;height:42px}.sound-toggle{font-size:24px;min-width:28px;text-align:center}
+ .sound-row input[type=range]{height:32px;width:calc(100% - 54px);margin:4px 0 0 54px;accent-color:var(--accent)}
+ .rain-settings,.sleep-settings{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;font-size:12px;margin-bottom:20px}.rain-settings select,.sleep-settings select{width:100%;max-width:100%;min-height:44px;font-size:16px;padding:10px;border-radius:9px}
+ .mute{min-height:46px;font-size:13px}.sound-card .mute{width:100%}
+ footer{font-size:11px;line-height:1.6;gap:12px;flex-wrap:wrap;padding:24px 3px}footer>span:last-child{max-width:none;text-align:left}
+ dialog{width:calc(100% - 24px);max-width:520px;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}.dialog-head{padding:12px;position:sticky;top:0;background:var(--control);z-index:1}.dialog-head input{font-size:16px;min-height:44px}#commandList{max-height:55dvh}#commandList button{min-height:48px;font-size:14px;gap:12px}.command-help{font-size:11px}
+ #toast{bottom:calc(16px + env(safe-area-inset-bottom));font-size:13px;line-height:1.5;width:max-content;max-width:calc(100% - 24px)}
+ .zen .mobile-nav{display:none}.zen .panorama{min-height:100svh;padding-top:max(18px,env(safe-area-inset-top));padding-bottom:calc(100px + env(safe-area-inset-bottom))}.zen #clock{font-size:clamp(72px,22vw,160px)}.zen .clock-wrap{padding:10px 0}.zen .scene-bottom{align-items:stretch}
+ #exitZen{bottom:calc(16px + env(safe-area-inset-bottom));min-height:48px;font-size:13px;z-index:10}#exitZen kbd{display:none}
+ .world .haze{filter:blur(12px)}.card{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+}
+@media (max-width:950px) and (max-height:500px) and (orientation:landscape){
+ .panorama{min-height:340px;gap:14px;padding:16px 22px}
+ .scene-top{flex-direction:row;align-items:center}.weather-actions{display:flex;max-width:60%;flex-wrap:nowrap}.scene-button{width:auto}
+ .clock-wrap{padding:0}#clock{font-size:64px}#date{margin:6px 0}.clock-line{display:none}.tagline{font-size:13px}
+ .scene-bottom{flex-direction:row;align-items:center}.scene-bottom>div:first-child{display:none}.scene-tabs{width:auto;margin-left:auto;display:flex}
+ .zen .panorama{min-height:100svh;padding-bottom:85px}.zen #clock{font-size:72px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
