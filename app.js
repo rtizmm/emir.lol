@@ -1,12 +1,12 @@
-'use strict';
+﻿'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let toastTimeout;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('#toast').classList.remove('visible'),3500)}
 const storage={get(key,fallback=''){try{return localStorage.getItem(key)??fallback}catch{return fallback}},set(key,value){try{localStorage.setItem(key,value);return true}catch{return false}}};
 function json(key,fallback){try{return JSON.parse(storage.get(key))??fallback}catch{return fallback}}
 function clock(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});$('#clock').dateTime=d.toISOString();$('#date').textContent=d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});const h=d.getHours();$('#greeting').textContent=h<6?'Gecenin kendi ritmi var.':h<12?'Güne sakin bir başlangıç.':h<18?'Biraz yavaşla.':'Günün gürültüsü geride kaldı.'}clock();setInterval(clock,1000);
-const sceneNames={night:'01 / Gece kıyısı',dusk:'02 / Son ışıklar',forest:'03 / Yeşil sessizlik'};
-function setScene(scene){if(!sceneNames[scene])scene='night';document.body.dataset.scene=scene;$('meta[name="theme-color"]').content={night:'#111526',dusk:'#31222e',forest:'#112c27'}[scene];$$('.scene-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scene===scene)));$('#sceneName').textContent=sceneNames[scene];storage.set('emir-scene',scene)}
+const sceneNames={night:'01 / Gece kıyısı',dusk:'02 / Son ışıklar',forest:'03 / Yeşil sessizlik',aurora:'04 / Kuzey ışıkları'};
+function setScene(scene){if(!sceneNames[scene])scene='night';document.body.dataset.scene=scene;$('meta[name="theme-color"]').content={night:'#111526',dusk:'#31222e',forest:'#112c27',aurora:'#09131c'}[scene];$$('.scene-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scene===scene)));$('#sceneName').textContent=sceneNames[scene];storage.set('emir-scene',scene)}
 setScene(storage.get('emir-scene','night'));$$('.scene-tabs button').forEach(b=>b.onclick=()=>setScene(b.dataset.scene));
 const notes=$('#notes');notes.value=storage.get('emir-notes');function noteCount(){$('#charCount').textContent=`${notes.value.length.toLocaleString('tr-TR')} karakter`}noteCount();
 notes.addEventListener('input',()=>{noteCount();$('#saveStatus').textContent=storage.set('emir-notes',notes.value)?'Kaydedildi':'Kaydedilemedi';});
@@ -31,24 +31,29 @@ let audioContext;const channels={};
 async function context(){const Constructor=window.AudioContext||window.webkitAudioContext;if(!Constructor)throw new Error('unsupported');if(!audioContext)audioContext=new Constructor();if(audioContext.state!=='running')await audioContext.resume();return audioContext}
 const rainProfiles={soft:{cutoff:1200,gain:.75,drops:35,speed:.65},steady:{cutoff:2600,gain:1,drops:75,speed:1},heavy:{cutoff:4300,gain:1.25,drops:130,speed:1.5}};
 let rainStyle=storage.get('emir-rain-style','steady');if(!rainProfiles[rainStyle])rainStyle='steady';$('#rainStyle').value=rainStyle;
-function level(kind){return Number($(`#${kind}Volume`).value)/100*(kind==='drone'?.13:kind==='rain'?.48*rainProfiles[rainStyle].gain:.32)}
+function level(kind){return Number($(`#${kind}Volume`)?.value||35)/100*(kind==='drone'?.13:kind==='fire'?.42:kind==='rain'?.48*rainProfiles[rainStyle].gain:.32)}
 function updateSoundUI(){for(const b of $$('[data-sound]')){const active=!!channels[b.dataset.sound];b.setAttribute('aria-pressed',String(active));b.querySelector('.sound-toggle').textContent=active?'−':'+'}$('#soundState').textContent=Object.keys(channels).length?'SES AÇIK':'SES KAPALI';$('#quickRain').setAttribute('aria-pressed',String(!!channels.rain));$('#quickRain').textContent=channels.rain?'☂ Yağmur sesini kapat':'☂ Yağmur sesini aç'}
 function stopSound(kind){const ch=channels[kind];if(!ch)return;delete channels[kind];ch.gain.gain.setTargetAtTime(0,audioContext.currentTime,.04);setTimeout(()=>{ch.nodes.forEach(n=>{try{n.stop()}catch{}n.disconnect()});ch.gain.disconnect()},200);updateSoundUI()}
 const pending=new Set();let audioGeneration=0;
-async function toggleSound(kind){if(channels[kind]){stopSound(kind);return}if(pending.has(kind))return;pending.add(kind);const generation=audioGeneration;try{const ctx=await context();if(generation!==audioGeneration)return;const gain=ctx.createGain();gain.gain.value=0;gain.connect(ctx.destination);const nodes=[];if(kind==='drone'){[130.81,164.81,196].forEach(f=>{const osc=ctx.createOscillator();osc.type='sine';osc.frequency.value=f;osc.connect(gain);osc.start();nodes.push(osc)})}else{const buffer=ctx.createBuffer(kind==='rain'?2:1,ctx.sampleRate*12,ctx.sampleRate);
+async function toggleSound(kind){if(channels[kind]){stopSound(kind);return}if(pending.has(kind))return;pending.add(kind);const generation=audioGeneration;try{const ctx=await context();if(generation!==audioGeneration)return;const gain=ctx.createGain();gain.gain.value=0;gain.connect(ctx.destination);const nodes=[];if(kind==='drone'){[130.81,164.81,196].forEach(f=>{const osc=ctx.createOscillator();osc.type='sine';osc.frequency.value=f;osc.connect(gain);osc.start();nodes.push(osc)})}else{const buffer=ctx.createBuffer(kind==='rain'||kind==='fire'?2:1,ctx.sampleRate*12,ctx.sampleRate);
 for(let channel=0;channel<buffer.numberOfChannels;channel++){
-const data=buffer.getChannelData(channel);let low=0,pink=0,tap=0,phase=0,frequency=1800;
+const data=buffer.getChannelData(channel);let low=0,pink=0,tap=0,phase=0,frequency=1800,crackle=0;
 for(let i=0;i<data.length;i++){
 const white=Math.random()*2-1;low=(low+.02*white)/1.02;
 if(kind==='brown'){data[i]=low*3.5;continue}
+if(kind==='fire'){
+  if(Math.random()<.0032){crackle=.45+Math.random()*.55;frequency=1200+Math.random()*2800;phase=0}
+  phase+=2*Math.PI*frequency/ctx.sampleRate;crackle*=.972;
+  data[i]=low*2.4+Math.sin(phase)*crackle+white*crackle*.35;continue;
+}
 pink=.97*pink+.03*white;
 if(Math.random()<.0018){tap=.12+Math.random()*.25;phase=0;frequency=900+Math.random()*2200}
 phase+=2*Math.PI*frequency/ctx.sampleRate;tap*=.988;
 const swell=.82+.1*Math.sin(2*Math.PI*i/data.length)+.08*Math.sin(6*Math.PI*i/data.length+channel);
 data[i]=(white*.38+pink*1.7+low*.6+Math.sin(phase)*tap)*swell;
 }}
-const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter();source.buffer=buffer;source.loop=true;filter.type='lowpass';filter.frequency.value=kind==='rain'?rainProfiles[rainStyle].cutoff:450;source.connect(filter);filter.connect(gain);source.start();nodes.push(source,filter);}channels[kind]={gain,nodes};gain.gain.setTargetAtTime(level(kind),ctx.currentTime,.2);updateSoundUI()}catch{toast('Ses başlatılamadı. Tarayıcının ses iznini kontrol edip tekrar dene.')}finally{pending.delete(kind)}}
-$$('[data-sound]').forEach(b=>b.onclick=()=>toggleSound(b.dataset.sound));for(const kind of ['rain','brown','drone']){const range=$(`#${kind}Volume`),saved=Number(storage.get(`emir-volume-${kind}`,range.value));range.value=Number.isFinite(saved)?Math.max(0,Math.min(100,saved)):30;range.oninput=()=>{storage.set(`emir-volume-${kind}`,range.value);if(channels[kind])channels[kind].gain.gain.setTargetAtTime(level(kind),audioContext.currentTime,.05)}}
+const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter();source.buffer=buffer;source.loop=true;filter.type='lowpass';filter.frequency.value=kind==='rain'?rainProfiles[rainStyle].cutoff:kind==='fire'?1900:450;source.connect(filter);filter.connect(gain);source.start();nodes.push(source,filter);}channels[kind]={gain,nodes};gain.gain.setTargetAtTime(level(kind),ctx.currentTime,.2);updateSoundUI()}catch{toast('Ses başlatılamadı. Tarayıcının ses iznini kontrol edip tekrar dene.')}finally{pending.delete(kind)}}
+$$('[data-sound]').forEach(b=>b.onclick=()=>toggleSound(b.dataset.sound));for(const kind of ['rain','fire','brown','drone']){const range=$(`#${kind}Volume`);if(!range)continue;const saved=Number(storage.get(`emir-volume-${kind}`,range.value));range.value=Number.isFinite(saved)?Math.max(0,Math.min(100,saved)):30;range.oninput=()=>{storage.set(`emir-volume-${kind}`,range.value);if(channels[kind])channels[kind].gain.gain.setTargetAtTime(level(kind),audioContext.currentTime,.05)}}
 function mute(){audioGeneration++;Object.keys(channels).forEach(stopSound);sleepEnd=null;$('#sleepTimer').value='0';$('#sleepStatus').textContent=''}$('#muteAll').onclick=mute;
 $('#quickRain').onclick=()=>toggleSound('rain');
 $('#rainStyle').onchange=()=>{rainStyle=$('#rainStyle').value;storage.set('emir-rain-style',rainStyle);if(channels.rain){channels.rain.nodes[1].frequency.setTargetAtTime(rainProfiles[rainStyle].cutoff,audioContext.currentTime,.3);channels.rain.gain.gain.setTargetAtTime(level('rain'),audioContext.currentTime,.3)}resizeRain()};
@@ -63,7 +68,97 @@ function animate(now){if(!rainOn||document.hidden){raf=0;return}if(now-lastFrame
 function renderRainState(){$('#motion').textContent=rainOn?'Yağmur açık':'Yağmur kapalı';$('#motion').setAttribute('aria-pressed',String(rainOn));if(raf){cancelAnimationFrame(raf);raf=0}ctx.clearRect(0,0,width,height);if(rainOn&&!document.hidden)raf=requestAnimationFrame(animate)}
 function toggleRain(){rainOn=!rainOn;storage.set('emir-rain',rainOn?'1':'0');renderRainState()}$('#motion').onclick=toggleRain;new ResizeObserver(resizeRain).observe(document.documentElement);window.addEventListener('resize',resizeRain);document.addEventListener('visibilitychange',renderRainState);reduced.addEventListener('change',e=>{if(e.matches){rainOn=false;renderRainState()}});
 const dialog=$('#commands'),search=$('#commandSearch');let previousFocus,selected=0;
-const actions=[['Odak sayacını başlat / duraklat','Space',toggleTimer],['Sade görünümü aç / kapat','F',()=>setZen(!zen)],['Gece kıyısı','1',()=>setScene('night')],['Gün batımı','2',()=>setScene('dusk')],['Orman','3',()=>setScene('forest')],['Yağmur görüntüsünü aç / kapat','R',toggleRain],['Yağmur sesini aç / kapat','S',()=>toggleSound('rain')],['Tüm sesleri kapat','M',mute],['Not defterini aç','N',()=>{if(zen)setZen(false);switchNotes(false);notes.scrollIntoView({block:'center'})}]];
+let breathTimer=null,breathStep=0;
+function toggleBreath(){
+  const orb=$('#breathOrb'),lbl=$('#breathLabel'),sub=$('#breathSub'),btn=$('#breathToggle');
+  if(!orb)return;
+  if(breathTimer){
+    clearTimeout(breathTimer);breathTimer=null;
+    orb.className='breath-orb';
+    lbl.textContent='Hazır olduğunda';
+    sub.textContent='zihnini yavaşlatmak için 19 saniyelik döngü';
+    btn.textContent='Başlat';
+    return;
+  }
+  btn.textContent='Durdur';
+  const steps=[
+    {cls:'inhale',title:'Burnundan derin nefes al…',desc:'4 saniye boyunca sakin bir şekilde',ms:4000},
+    {cls:'hold',title:'Nefesini tut…',desc:'7 saniye boyunca dinginliği hisset',ms:7000},
+    {cls:'exhale',title:'Ağzından yavaşça ver…',desc:'8 saniye boyunca tüm gerginliği bırak',ms:8000}
+  ];
+  breathStep=0;
+  function nextPhase(){
+    const s=steps[breathStep%steps.length];
+    orb.className='breath-orb '+s.cls;
+    lbl.textContent=s.title;
+    sub.textContent=s.desc;
+    breathStep++;
+    breathTimer=setTimeout(nextPhase,s.ms);
+  }
+  nextPhase();
+}
+if($('#breathToggle'))$('#breathToggle').onclick=toggleBreath;
+
+const nightQuotes=[
+  '“Bazen en büyük ilerleme, ekranın karşısında derin bir nefes alıp sadece tek bir şeye odaklanmaktır.”',
+  '“Gece, gündüzün gürültüsünde duyamadığın düşünceleri fısıldar.”',
+  '“Her şeyi aynı anda bitirmek zorunda değilsin; sıradaki küçük adım yeterli.”',
+  '“Sessizlik boşluk değildir, zihnin kendine yer açma biçimidir.”',
+  '“Acele etmeden yapılan her iş, içinde kendi huzurunu taşır.”',
+  '“Yıldızları görmek için önce etraftaki fazla ışıkları kapatmak gerekir.”'
+];
+let quoteIdx=0;
+if($('#nextQuote'))$('#nextQuote').onclick=()=>{
+  quoteIdx=(quoteIdx+1)%nightQuotes.length;
+  $('#nightQuote').textContent=nightQuotes[quoteIdx];
+};
+
+function renderWeekStats(){
+  const wrap=$('#weekBars');if(!wrap)return;
+  wrap.replaceChildren();
+  const days=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  const entries=[];
+  let maxVal=1,totalSessions=0,streak=0,streakBroken=false;
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    const count=Number(sessions[k])||0;
+    totalSessions+=count;
+    if(count>maxVal)maxVal=count;
+    entries.push({label:i===0?'Bugün':days[d.getDay()],count,today:i===0});
+  }
+  for(let i=0;i<30;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if((Number(sessions[k])||0)>0 && !streakBroken)streak++;
+    else if(i>0)streakBroken=true;
+  }
+  for(const e of entries){
+    const col=document.createElement('div'),barWrap=document.createElement('div'),fill=document.createElement('div'),day=document.createElement('span');
+    col.className='week-col';barWrap.className='week-bar-wrap';fill.className='week-bar-fill';
+    fill.style.height=`${Math.max(8,Math.round((e.count/maxVal)*100))}%`;
+    fill.title=`${e.label}: ${e.count} seans (${e.count*25} dk)`;
+    day.className='week-day'+(e.today?' today':'');day.textContent=e.label;
+    barWrap.append(fill);col.append(barWrap,day);wrap.append(col);
+  }
+  if($('#weekTotal'))$('#weekTotal').textContent=`${totalSessions*25} dk (${totalSessions} seans)`;
+  if($('#streakBadge'))$('#streakBadge').textContent=`${streak} gün seri`;
+}
+renderWeekStats();
+setInterval(renderWeekStats,5000);
+
+$$('.preset-chip').forEach(btn=>{
+  btn.onclick=async()=>{
+    const targets=btn.dataset.mix.split(',');
+    for(const k of ['rain','fire','brown','drone']){
+      if(targets.includes(k)&&!channels[k])await toggleSound(k);
+      else if(!targets.includes(k)&&channels[k])stopSound(k);
+    }
+    $$('.preset-chip').forEach(c=>c.classList.toggle('active',c===btn));
+  };
+});
+
+const actions=[['Odak sayacını başlat / duraklat','Space',toggleTimer],['Sade görünümü aç / kapat','F',()=>setZen(!zen)],['Gece kıyısı','1',()=>setScene('night')],['Gün batımı','2',()=>setScene('dusk')],['Orman','3',()=>setScene('forest')],['Kuzey ışıkları','4',()=>setScene('aurora')],['Yağmur görüntüsünü aç / kapat','R',toggleRain],['Yağmur sesini aç / kapat','S',()=>toggleSound('rain')],['Kamp ateşini aç / kapat','C',()=>toggleSound('fire')],['4-7-8 Nefes rehberini başlat / durdur','B',toggleBreath],['Tüm sesleri kapat','M',mute],['Not defterini aç','N',()=>{if(zen)setZen(false);switchNotes(false);notes.scrollIntoView({block:'center'})}]];
 function commandButtons(){return $$('#commandList button')}
 function markSelected(){commandButtons().forEach((b,i)=>b.classList.toggle('selected',i===selected))}
 function renderCommands(){const list=$('#commandList');list.replaceChildren();selected=0;const query=search.value.toLocaleLowerCase('tr-TR');for(const [label,key,action]of actions.filter(a=>a[0].toLocaleLowerCase('tr-TR').includes(query))){const b=document.createElement('button'),span=document.createElement('span'),kbd=document.createElement('kbd');span.textContent=label;kbd.textContent=key;b.append(span,kbd);b.onclick=()=>{closeCommands();action()};b.onfocus=()=>{selected=commandButtons().indexOf(b);markSelected()};list.append(b)}if(!list.children.length){const p=document.createElement('p');p.className='empty';p.textContent='Bu komut bulunamadı.';list.append(p)}markSelected()}
@@ -72,3 +167,4 @@ function closeCommands(){dialog.close();if(previousFocus&&previousFocus.isConnec
 $('#commandOpen').onclick=openCommands;$('#commandClose').onclick=closeCommands;search.oninput=renderCommands;dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeCommands()}});
 dialog.addEventListener('keydown',e=>{const buttons=commandButtons();if(['ArrowDown','ArrowUp'].includes(e.key)&&buttons.length){e.preventDefault();selected=(selected+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;markSelected();buttons[selected].scrollIntoView({block:'nearest'})}if(e.key==='Enter'&&document.activeElement===search&&buttons[selected]){e.preventDefault();buttons[selected].click()}});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();dialog.open?closeCommands():openCommands();return}if(dialog.open)return;if(e.key==='Escape'&&zen){setZen(false);return}if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.target.closest('input,textarea,select,button,a,[contenteditable]'))return;const key=e.key.toLowerCase();const action=actions.find(a=>a[1].toLowerCase()===(key===' '?'space':key));if(action){e.preventDefault();action[2]()}});
+
